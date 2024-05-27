@@ -1,8 +1,11 @@
-from flask import Flask, render_template, request, jsonify
-from init import app, db, ma
+from flask import render_template, request, jsonify
 from models.user import User, UserSchema
 from models.course import Course, CourseSchema
 import bcrypt
+from init import app, db, ma
+
+if __name__ == "__main__":
+    app.run(debug=True)
 
 user_schema = UserSchema()
 course_schema = CourseSchema()

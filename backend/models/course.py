@@ -1,4 +1,4 @@
-from ..app import db, ma
+from init import db, ma
 import bcrypt
 
 class Course(db.Model):
@@ -8,7 +8,7 @@ class Course(db.Model):
 
 class CourseSchema(ma.Schema):
     class Meta:
-        fields = ("name")
+        fields = ("name",)
         model = Course
 
 course_schema = CourseSchema()
