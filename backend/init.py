@@ -17,5 +17,7 @@ ma = Marshmallow(app)
 
 user_courses = db.Table('user_courses',
     db.Column('email', db.String(100), db.ForeignKey('user.email'), primary_key=True),
-    db.Column('name', db.String(100), db.ForeignKey('course.name'), primary_key=True)
+    db.Column('name', db.String(100), db.ForeignKey('course.name'), primary_key=True),
+    db.Column('semester', db.String(100)),
+    db.Column('grade', db.Integer)
 )
