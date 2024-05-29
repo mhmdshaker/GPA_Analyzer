@@ -48,13 +48,14 @@ def create_user():
     return user_schema.jsonify(new_user)
     
 #sign in:
-@app.route('/sign_in', methods=['GET'])
+@app.route('/sign_in', methods=['POST'])
 def sign_in():
     email = request.json['email']
     password = request.json['password']
     user = User.query.filter_by(email=email).first()
     if user and bcrypt.checkpw(password.encode('utf-8'), user.hashed_password.encode('utf-8')):
         token = create_token(email)
+        print("succersss")
         return jsonify({'token': token}), 200
     else:
         return jsonify({'error': 'Invalid email or password'})
