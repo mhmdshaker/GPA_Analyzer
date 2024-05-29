@@ -61,6 +61,22 @@ function Home() {
     setSignUp(false);
   };
 
+  //functions:
+  const signInFunction = () => {
+    fetch(`${Server}/sign_in`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: username,
+        password: password,
+      }),
+    })
+      .then(response => response.json())
+      .then(data => setSearchResults(data));
+  };
+
   return (
     <div>
       {/* Sign in button */}
@@ -74,7 +90,14 @@ function Home() {
           value={password}
           onChange={handlePasswordChange}
         />
-        <Button onClick={handleSignInClose}>Sign in</Button>
+        <Button
+          onClick={() => {
+            handleSignInClose();
+            signInFunction();
+          }}
+        >
+          Sign in
+        </Button>
       </Dialog>
 
       {/* Sign up button */}
