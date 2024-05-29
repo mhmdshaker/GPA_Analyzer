@@ -2,7 +2,7 @@ from flask import render_template, request, jsonify
 from models.user import User, UserSchema
 from models.course import Course, CourseSchema
 import bcrypt
-from init import app, db, ma, user_courses
+from init import app, db, ma, UserCourse, UserCourseSchema
 import jwt, datetime
 from db_config import SECRET_KEY
 
@@ -11,8 +11,7 @@ if __name__ == "__main__":
 
 user_schema = UserSchema()
 course_schema = CourseSchema()
-
-
+user_courses_schema = UserCourseSchema()
 
 
 #creates a token when logging in
@@ -54,9 +53,9 @@ def sign_in():
     email = request.json['email']
     password = request.json['password']
     user = User.query.filter_by(email=email).first()
-    if user and bcrypt.check_password_hash(user.hashed_password, password):
+    if user and bcrypt.checkpw(password.encode('utf-8'), user.hashed_password.encode('utf-8')):
         token = create_token(email)
-        return user_schema.jsonify(user)
+        return jsonify({'token': token}), 200
     else:
         return jsonify({'error': 'Invalid email or password'})
     
@@ -79,7 +78,7 @@ def add_grade():
     if token:
         try:
             #to get the email from the token
-            email = decode_token(token)
+            user_email = decode_token(token)
         except jwt.ExpiredSignatureError:
             return jsonify({"message": "Token expired."}), 403
         except jwt.InvalidTokenError:
@@ -92,7 +91,7 @@ def add_grade():
         return jsonify({'message': 'Course or user not found'}), 404
 
     # Create a new CourseUser instance
-    course_user = user_courses(name=course.name, email=user.email, grade=grade, semester=semester)
+    course_user = UserCourse(name=course.name, email=user.email, grade=grade, semester=semester)
     # Add the new CourseUser to the database
     db.session.add(course_user)
     db.session.commit()
