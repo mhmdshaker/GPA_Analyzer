@@ -162,3 +162,4 @@ cython_debug/
 # .gitignore
 backend/db_config.py
 .DS_Store
+myenv/
