@@ -2,9 +2,10 @@ from flask import render_template, request, jsonify
 from models.user import User, UserSchema
 from models.course import Course, CourseSchema
 import bcrypt
-from init import app, db, ma, UserCourse, UserCourseSchema
+from init import app, db, ma, UserCourse, UserCourseSchema, semester_schema
 import jwt, datetime
 from db_config import SECRET_KEY
+from marshmallow import Schema, fields
 
 if __name__ == "__main__":
     app.run(debug=True)
@@ -12,7 +13,6 @@ if __name__ == "__main__":
 user_schema = UserSchema()
 course_schema = CourseSchema()
 user_courses_schema = UserCourseSchema()
-
 
 #creates a token when logging in
 def create_token(email):
@@ -36,7 +36,6 @@ def decode_token(token):
     payload = jwt.decode(token, SECRET_KEY, "HS256")
     return payload["email"]
 
-
 #create a user:
 @app.route('/users', methods=['POST'])
 def create_user():
@@ -59,13 +58,6 @@ def sign_in():
         return jsonify({'token': token}), 200
     else:
         return jsonify({'error': 'Invalid email or password'})
-    
-#list all courses:
-@app.route('/courses_search', methods=['GET'])
-def search_courses():
-    course_name = request.args.get('name')
-    courses = Course.query.filter(Course.name.contains(course_name)).all()
-    return jsonify(course_schema.dump(courses, many=True))
 
 # #add a grade to a course for a specific user:
 @app.route('/add_grade', methods = ['POST'])
@@ -84,13 +76,23 @@ def add_grade():
             return jsonify({"message": "Token expired."}), 403
         except jwt.InvalidTokenError:
             return jsonify({"message": "Invalid token."}), 403
-    
     # Get the course and user from the database
     course = Course.query.filter_by(name=course_name).first()
     user = User.query.filter_by(email=user_email).first()
+    
+    #search if any course in the db has the same semester in the db:
+    course_semester = Course.query.filter_by(semester=semester).all()
+    found = False
+    for x in course_semester:
+        if x.name == course_name:
+            found = True
+            break
+    if not found:
+        return jsonify({'message': 'Course not found in this semester'}), 404
+    
+    print(token)
     if not course or not user:
         return jsonify({'message': 'Course or user not found'}), 404
-
     # Create a new CourseUser instance
     course_user = UserCourse(name=course.name, email=user.email, grade=grade, semester=semester)
     # Add the new CourseUser to the database
@@ -98,6 +100,49 @@ def add_grade():
     db.session.commit()
 
     return jsonify({'message': 'Grade added successfully'}), 200
-        
-    
-    
+
+#display GPA of User:
+@app.route('/gpa', methods=['GET'])
+def display_gpa():
+    token = extract_auth_token(request)
+    user_email = None
+    if token:
+        try:
+            user_email = decode_token(token)
+        except jwt.ExpiredSignatureError:
+            return jsonify({"message": "Token expired."}), 403
+        except jwt.InvalidTokenError:
+            return jsonify({"message": "Invalid token."}), 403
+
+    user = User.query.filter_by(email=user_email).first()
+    if not user:
+        return jsonify({'message': 'User not found'}), 404
+
+    user_courses = UserCourse.query.filter_by(email=user_email).all()
+    total_credits = 0
+    total_grade_points = 0
+    for x in user_courses:
+        total_credits += x.course.credits
+        total_grade_points += x.grade * x.course.credits
+
+    gpa = total_grade_points / total_credits
+    return jsonify({'gpa': gpa}), 200
+
+#list all courses:
+@app.route('/courses_search', methods=['GET'])
+def search_courses():
+    course_name = request.args.get('name')
+    courses = Course.query.filter(Course.name.contains(course_name)).all()
+    return jsonify(course_schema.dump(courses, many=True))
+
+#list all semesters:
+@app.route('/semesters_search', methods=['GET'])
+def search_semesters():
+    semester = request.args.get('name')
+    courses = Course.query.filter(Course.semester.contains(semester)).all()
+    semesters = [{"semester": course.semester} for course in courses]
+    #remove duplicates:
+    semesters = list(set([semester['semester'] for semester in semesters]))
+    semesters = [{"semester": semester} for semester in semesters]
+    semesters.sort(key=lambda semester: semester['semester'])
+    return jsonify(semester_schema.dump(semesters, many=True))
