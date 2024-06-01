@@ -128,13 +128,6 @@ def display_gpa():
     gpa = total_grade_points / total_credits
     return jsonify({'gpa': gpa}), 200
 
-#list all courses:
-@app.route('/courses_search', methods=['GET'])
-def search_courses():
-    course_name = request.args.get('name')
-    courses = Course.query.filter(Course.name.contains(course_name)).all()
-    return jsonify(course_schema.dump(courses, many=True))
-
 #list all semesters:
 @app.route('/semesters_search', methods=['GET'])
 def search_semesters():
@@ -146,3 +139,16 @@ def search_semesters():
     semesters = [{"semester": semester} for semester in semesters]
     semesters.sort(key=lambda semester: semester['semester'])
     return jsonify(semester_schema.dump(semesters, many=True))
+
+#list all courses:
+@app.route('/courses_search', methods=['GET'])
+def search_courses():
+    course_name = request.args.get('name')
+    semester = request.args.get('semester')
+    #keep the courses that have the semester name as an attribute
+    courses = Course.query.filter_by(semester=semester).all()
+    courses_in_semester = []
+    for course in courses:
+        if course.semester == semester:
+            courses_in_semester.append(course)
+    return jsonify(course_schema.dump(courses_in_semester, many=True))
