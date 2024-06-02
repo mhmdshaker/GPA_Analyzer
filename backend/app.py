@@ -54,7 +54,6 @@ def sign_in():
     user = User.query.filter_by(email=email).first()
     if user and bcrypt.checkpw(password.encode('utf-8'), user.hashed_password.encode('utf-8')):
         token = create_token(email)
-        print("succersss")
         return jsonify({'token': token}), 200
     else:
         return jsonify({'error': 'Invalid email or password'})
@@ -90,7 +89,6 @@ def add_grade():
     if not found:
         return jsonify({'message': 'Course not found in this semester'}), 404
     
-    print(token)
     if not course or not user:
         return jsonify({'message': 'Course or user not found'}), 404
     # Create a new CourseUser instance
@@ -152,3 +150,36 @@ def search_courses():
         if course.semester == semester:
             courses_in_semester.append(course)
     return jsonify(course_schema.dump(courses_in_semester, many=True))
+
+#display all grades of a user, divided per semester:
+@app.route('/grades', methods=['GET'])
+def display_grades():
+    token = extract_auth_token(request)
+    user_email = None
+    if token:
+        try:
+            user_email = decode_token(token)
+        except jwt.ExpiredSignatureError:
+            return jsonify({"message": "Token expired."}), 403
+        except jwt.InvalidTokenError:
+            return jsonify({"message": "Invalid token."}), 403
+
+    user = User.query.filter_by(email=user_email).first()
+    if not user:
+        return jsonify({'message': 'User not found'}), 404
+
+    user_courses = UserCourse.query.filter_by(email=user_email).all()
+    semesters = []
+    for x in user_courses:
+        semesters.append(x.semester)
+    semesters = list(set(semesters))
+    semesters.sort()
+    grades = []
+    for semester in semesters:
+        courses = UserCourse.query.filter_by(email=user_email, semester=semester).all()
+        grades_per_semester = []
+        for course in courses:
+            grades_per_semester.append({"course": course.name, "grade": course.grade})
+        grades.append({"semester": semester, "courses": grades_per_semester})
+
+    return jsonify(grades)

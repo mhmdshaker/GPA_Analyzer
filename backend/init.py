@@ -21,7 +21,7 @@ class UserCourse(db.Model):
     email = db.Column(db.String(100), db.ForeignKey('user.email'), primary_key=True)
     name = db.Column(db.String(100), db.ForeignKey('course.name'), primary_key=True)
     grade = db.Column(db.Integer, primary_key = True)
-
+    semester = db.Column(db.String(100), primary_key = True)
     user = db.relationship('User', backref=db.backref('user_course_entries', cascade='all, delete-orphan'))
     course = db.relationship('Course', backref=db.backref('course_user_entries', cascade='all, delete-orphan'))
     def __init__(self, email, name, semester, grade):
