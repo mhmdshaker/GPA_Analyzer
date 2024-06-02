@@ -40,6 +40,28 @@ function Home() {
     fetchGpa();
   }, [userToken, gradeChanged]);
 
+  useEffect(() => {
+    const fetchGrades = async () => {
+      try {
+        const response = await fetch(`${Server}/grades`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${userToken}`,
+          },
+        });
+        const data = await response.json();
+        console.log(data);
+        setGrades(data);
+      } catch (error) {
+        console.error('Error fetching grades:', error);
+      }
+    };
+    if (userToken) {
+      fetchGrades();
+    }
+  }, [gpa]);
+
   const searchSemesters = async query => {
     const response = await fetch(`${Server}/semesters_search?name=${query}`, {
       method: 'GET',
@@ -150,17 +172,22 @@ function Home() {
       });
   };
 
-  const fetchGrades = async () => {
-    const response = await fetch(`${Server}/grades`, {
-      method: 'GET',
+  const handleDeleteCourse = (name, semester) => {
+    fetch(`${Server}/delete_grade`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${userToken}`,
       },
-    });
-    const data = await response.json();
-    console.log(data);
-    setGrades(data);
+      body: JSON.stringify({
+        course: name,
+        semester: semester,
+      }),
+    }).then(response =>
+      response.json().then(body => {
+        setGradeChanged(!gradeChanged);
+      })
+    );
   };
 
   return (
@@ -221,11 +248,17 @@ function Home() {
               <Typography variant="body1">
                 {course.course}: {course.grade}
               </Typography>
+              <button
+                onClick={() =>
+                  handleDeleteCourse(course.course, semester.semester)
+                }
+              >
+                X
+              </button>
             </Box>
           ))}
         </Box>
       ))}
-      {userToken && <button onClick={fetchGrades}>Fetch Grades</button>}
     </div>
   );
 }
