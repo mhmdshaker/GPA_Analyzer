@@ -3,6 +3,8 @@ import Dialog from '@material-ui/core/Dialog';
 import Button from '@material-ui/core/Button';
 import Autocomplete from '@material-ui/lab/Autocomplete';
 import TextField from '@material-ui/core/TextField';
+import Box from '@material-ui/core/Box';
+import Typography from '@material-ui/core/Typography';
 import { useState, useEffect } from 'react';
 
 function Home() {
@@ -15,9 +17,10 @@ function Home() {
   const [courseSearchResults, setCourseSearchResults] = useState([]);
   const [semester, setSemester] = useState('');
   const [semesterSearchResults, setSemesterSearchResults] = useState([]);
-  const [grade, setGrade] = useState('');
+  const [grade, setGrade] = useState(''); //grade to be added
   const [gpa, setGpa] = useState(0);
   const [gradeChanged, setGradeChanged] = useState(false);
+  const [grades, setGrades] = useState([]); //grades to be displayed
   const Server = 'http://localhost:5000';
 
   //Effects:
@@ -61,6 +64,7 @@ function Home() {
     const data = await response.json();
     setCourseSearchResults(data);
   };
+
   const handleAddGrade = () => {
     console.log(userToken);
     fetch(`${Server}/add_grade`, {
@@ -106,6 +110,11 @@ function Home() {
     setSignIn(true);
   };
 
+  const handleSignOut = () => {
+    setUserToken(null);
+    setGpa(0);
+  };
+
   const handleSignInClose = () => {
     setSignIn(false);
   };
@@ -141,10 +150,23 @@ function Home() {
       });
   };
 
+  const fetchGrades = async () => {
+    const response = await fetch(`${Server}/grades`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${userToken}`,
+      },
+    });
+    const data = await response.json();
+    console.log(data);
+    setGrades(data);
+  };
+
   return (
     <div>
       {/* Sign in button */}
-      <Button onClick={handleSignInOpen}>Sign in</Button>
+      {!userToken && <Button onClick={handleSignInOpen}>Sign in</Button>}
       <Dialog open={signIn} onClose={handleSignInClose}>
         Username:
         <input type="text" value={username} onChange={handleUsernameChange} />
@@ -164,7 +186,7 @@ function Home() {
         </Button>
       </Dialog>
       {/* Sign up button */}
-      <Button onClick={handleSignUpOpen}>Sign up</Button>
+      {!userToken && <Button onClick={handleSignUpOpen}>Sign up</Button>}
       <Dialog open={signUp} onClose={handleSignUpClose}>
         Email:
         <input type="text" />
@@ -172,6 +194,7 @@ function Home() {
         <input type="text" />
         <Button onClick={handleSignUpClose}>Sign up</Button>
       </Dialog>
+      {userToken && <Button onClick={handleSignOut}>Sign out</Button>}
       {/* Semester */}
       <Autocomplete
         options={semesterSearchResults}
@@ -189,6 +212,20 @@ function Home() {
       <input type="text" value={grade} onChange={handleGradeChange} />
       <Button onClick={handleAddGrade}>Add Grade</Button>
       <TextField label="GPA" value={gpa} InputProps={{ readOnly: true }} />{' '}
+      {/* display grades: */}
+      {grades.map(semester => (
+        <Box border={1} margin={1} padding={1} key={semester.semester}>
+          <Typography variant="h6">{semester.semester}</Typography>
+          {semester.courses.map(course => (
+            <Box border={1} margin={1} padding={1} key={course.course}>
+              <Typography variant="body1">
+                {course.course}: {course.grade}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
+      ))}
+      {userToken && <button onClick={fetchGrades}>Fetch Grades</button>}
     </div>
   );
 }
