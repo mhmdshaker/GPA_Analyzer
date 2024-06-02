@@ -122,7 +122,8 @@ def display_gpa():
     for x in user_courses:
         total_credits += x.course.credits
         total_grade_points += x.grade * x.course.credits
-
+    if (total_credits == 0):
+        return jsonify({'gpa': 0}), 200
     gpa = total_grade_points / total_credits
     return jsonify({'gpa': gpa}), 200
 
