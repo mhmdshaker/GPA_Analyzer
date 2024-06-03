@@ -25,6 +25,37 @@ function Home() {
 
   //Effects:
   useEffect(() => {
+    const fetchInitialSemesterOptions = async () => {
+      const response = await fetch(`${Server}/semesters_search?name=`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+      });
+      const data = await response.json();
+      setSemesterSearchResults(data);
+    };
+  
+    fetchInitialSemesterOptions();
+  }, []);
+
+  useEffect(() => {
+    const fetchInitialCourseOptions = async () => {
+      if (semester) {
+        const response = await fetch(`${Server}/courses_search?name=&semester=${semester}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+        });
+        const data = await response.json();
+        setCourseSearchResults(data);
+      }
+    };
+    fetchInitialCourseOptions();
+  }, [semester]);
+
+  useEffect(() => {
     const fetchGpa = async () => {
       const response = await fetch(`${Server}/gpa`, {
         method: 'GET',
@@ -36,8 +67,9 @@ function Home() {
       const data = await response.json();
       setGpa(data.gpa);
     };
-
-    fetchGpa();
+    if (userToken){
+      fetchGpa();
+    }
   }, [userToken, gradeChanged]);
 
   useEffect(() => {
@@ -147,10 +179,16 @@ function Home() {
 
   const handleSignUpClose = () => {
     setSignUp(false);
+    if (username && password){
+      signUpFunction();
+      setUsername('');
+      setPassword('');
+    }
   };
 
   const handleSemesterChange = (event, value) => {
     setSemester(value);
+    setCourseName('');
     searchSemesters(value);
   };
 
@@ -170,6 +208,21 @@ function Home() {
       .then(body => {
         setUserToken(body.token);
       });
+  };
+
+  const signUpFunction = () => {
+    fetch(`${Server}/users`, { 
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: username,
+        password: password,
+      }),
+    })
+      .then(response => {
+        response.json()})
   };
 
   const handleDeleteCourse = (name, semester) => {
@@ -212,18 +265,20 @@ function Home() {
           Sign in
         </Button>
       </Dialog>
+      
       {/* Sign up button */}
       {!userToken && <Button onClick={handleSignUpOpen}>Sign up</Button>}
       <Dialog open={signUp} onClose={handleSignUpClose}>
         Email:
-        <input type="text" />
+        <input type="text" value = {username} onChange={handleUsernameChange} />
         Password:
-        <input type="text" />
+        <input type="text" value = {password} onChange={handlePasswordChange} />
         <Button onClick={handleSignUpClose}>Sign up</Button>
       </Dialog>
       {userToken && <Button onClick={handleSignOut}>Sign out</Button>}
       {/* Semester */}
       <Autocomplete
+      openOnFocus
         options={semesterSearchResults}
         getOptionLabel={option => option.semester}
         onInputChange={handleSemesterChange}
@@ -231,14 +286,16 @@ function Home() {
       />
       {/* Course Name */}
       <Autocomplete
+      openOnFocus
         options={courseSearchResults}
         getOptionLabel={option => option.name}
         onInputChange={handleCourseNameChange}
         renderInput={params => <TextField {...params} label="Course Name" />}
       />
-      <input type="text" value={grade} onChange={handleGradeChange} />
-      <Button onClick={handleAddGrade}>Add Grade</Button>
-      <TextField label="GPA" value={gpa} InputProps={{ readOnly: true }} />{' '}
+
+      {userToken && <input type="text" value={grade} onChange={handleGradeChange}/>}
+      {userToken && <Button onClick={handleAddGrade}>Add Grade</Button>}
+      {userToken && <TextField label="GPA" value={gpa} InputProps={{ readOnly: true }} />} {' '}
       {/* display grades: */}
       {grades.map(semester => (
         <Box border={1} margin={1} padding={1} key={semester.semester}>
