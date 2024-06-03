@@ -120,6 +120,18 @@ function Home() {
   };
 
   const handleAddGrade = () => {
+    if (semester === '') {
+      alert('Please select a semester');
+      return;
+    }
+    else if (courseName === '') {
+      alert('Please select a course');
+      return;
+    }
+    else if (grade === '') {
+      alert('Please enter a grade');
+      return;
+    }
     console.log(userToken);
     fetch(`${Server}/add_grade`, {
       method: 'POST',
@@ -164,27 +176,57 @@ function Home() {
     setSignIn(true);
   };
 
+  const handleSignInCloseEmpty = () => {
+    setSignIn(false);
+    setUsername('');
+    setPassword('');
+  };
+
+  const handleSignInClose = () => {
+    if (!username){
+      alert('Please enter an email');
+    }
+    else if (!password){
+      alert('Please enter a password');
+    }
+    else{
+      setSignIn(false);
+      signInFunction();
+      setUsername('');
+      setPassword('');
+    }
+  }
+
   const handleSignOut = () => {
     setUserToken(null);
     setGpa(0);
   };
 
-  const handleSignInClose = () => {
-    setSignIn(false);
-  };
 
   const handleSignUpOpen = () => {
     setSignUp(true);
   };
 
   const handleSignUpClose = () => {
-    setSignUp(false);
-    if (username && password){
+    if (!username){
+      alert('Please enter an email');
+    }
+    else if (!password){
+      alert('Please enter a password');
+    }
+    else{
+      setSignUp(false);
       signUpFunction();
       setUsername('');
       setPassword('');
     }
   };
+
+  const handleSignUpCloseEmpty = () => {
+    setSignUp(false);
+    setUsername('');
+    setPassword('');
+  }
 
   const handleSemesterChange = (event, value) => {
     setSemester(value);
@@ -247,7 +289,7 @@ function Home() {
     <div>
       {/* Sign in button */}
       {!userToken && <Button onClick={handleSignInOpen}>Sign in</Button>}
-      <Dialog open={signIn} onClose={handleSignInClose}>
+      <Dialog open={signIn} onClose={handleSignInCloseEmpty}>
         Username:
         <input type="text" value={username} onChange={handleUsernameChange} />
         Password:
@@ -268,11 +310,11 @@ function Home() {
       
       {/* Sign up button */}
       {!userToken && <Button onClick={handleSignUpOpen}>Sign up</Button>}
-      <Dialog open={signUp} onClose={handleSignUpClose}>
+      <Dialog open={signUp} onClose={handleSignUpCloseEmpty}>
         Email:
         <input type="text" value = {username} onChange={handleUsernameChange} />
         Password:
-        <input type="text" value = {password} onChange={handlePasswordChange} />
+        <input type="password" value = {password} onChange={handlePasswordChange} />
         <Button onClick={handleSignUpClose}>Sign up</Button>
       </Dialog>
       {userToken && <Button onClick={handleSignOut}>Sign out</Button>}
