@@ -41,6 +41,9 @@ def decode_token(token):
 def create_user():
     email = request.json['email']
     password = request.json['password']
+    for user in User.query.all():
+        if user.email == email:
+            return jsonify({'message': 'User already exists'}), 400
     new_user = User(email, password)
     db.session.add(new_user)
     db.session.commit()
@@ -56,7 +59,7 @@ def sign_in():
         token = create_token(email)
         return jsonify({'token': token}), 200
     else:
-        return jsonify({'error': 'Invalid email or password'})
+        return jsonify({'error': 'Invalid email or password'}), 401
 
 # #add a grade to a course for a specific user:
 @app.route('/add_grade', methods = ['POST'])

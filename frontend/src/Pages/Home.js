@@ -29,25 +29,28 @@ function Home() {
       const response = await fetch(`${Server}/semesters_search?name=`, {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
       });
       const data = await response.json();
       setSemesterSearchResults(data);
     };
-  
+
     fetchInitialSemesterOptions();
   }, []);
 
   useEffect(() => {
     const fetchInitialCourseOptions = async () => {
       if (semester) {
-        const response = await fetch(`${Server}/courses_search?name=&semester=${semester}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-        });
+        const response = await fetch(
+          `${Server}/courses_search?name=&semester=${semester}`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        );
         const data = await response.json();
         setCourseSearchResults(data);
       }
@@ -67,7 +70,7 @@ function Home() {
       const data = await response.json();
       setGpa(data.gpa);
     };
-    if (userToken){
+    if (userToken) {
       fetchGpa();
     }
   }, [userToken, gradeChanged]);
@@ -123,12 +126,10 @@ function Home() {
     if (semester === '') {
       alert('Please select a semester');
       return;
-    }
-    else if (courseName === '') {
+    } else if (courseName === '') {
       alert('Please select a course');
       return;
-    }
-    else if (grade === '') {
+    } else if (grade === '') {
       alert('Please enter a grade');
       return;
     }
@@ -183,38 +184,33 @@ function Home() {
   };
 
   const handleSignInClose = () => {
-    if (!username){
+    if (!username) {
       alert('Please enter an email');
-    }
-    else if (!password){
+    } else if (!password) {
       alert('Please enter a password');
-    }
-    else{
+    } else {
       setSignIn(false);
       signInFunction();
       setUsername('');
       setPassword('');
     }
-  }
+  };
 
   const handleSignOut = () => {
     setUserToken(null);
     setGpa(0);
   };
 
-
   const handleSignUpOpen = () => {
     setSignUp(true);
   };
 
   const handleSignUpClose = () => {
-    if (!username){
+    if (!username) {
       alert('Please enter an email');
-    }
-    else if (!password){
+    } else if (!password) {
       alert('Please enter a password');
-    }
-    else{
+    } else {
       setSignUp(false);
       signUpFunction();
       setUsername('');
@@ -226,7 +222,7 @@ function Home() {
     setSignUp(false);
     setUsername('');
     setPassword('');
-  }
+  };
 
   const handleSemesterChange = (event, value) => {
     setSemester(value);
@@ -246,14 +242,25 @@ function Home() {
         password: password,
       }),
     })
-      .then(response => response.json())
+      .then(response => {
+        if (response.status === 401) {
+          alert('Unauthorized: Invalid username or password');
+          return;
+        } else {
+          alert(`Error ${response.status}: ${response.statusText}`);
+          return;
+        }
+        return response.json();
+      })
       .then(body => {
-        setUserToken(body.token);
+        if (body) {
+          setUserToken(body.token);
+        }
       });
   };
 
   const signUpFunction = () => {
-    fetch(`${Server}/users`, { 
+    fetch(`${Server}/users`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -262,9 +269,16 @@ function Home() {
         email: username,
         password: password,
       }),
-    })
-      .then(response => {
-        response.json()})
+    }).then(response => {
+      if (response.status === 400) {
+        alert('Conflict: email already used');
+        return;
+      } else {
+        alert(`Error ${response.status}: ${response.statusText}`);
+        return;
+      }
+      response.json();
+    });
   };
 
   const handleDeleteCourse = (name, semester) => {
@@ -301,26 +315,28 @@ function Home() {
         <Button
           onClick={() => {
             handleSignInClose();
-            signInFunction();
           }}
         >
           Sign in
         </Button>
       </Dialog>
-      
       {/* Sign up button */}
       {!userToken && <Button onClick={handleSignUpOpen}>Sign up</Button>}
       <Dialog open={signUp} onClose={handleSignUpCloseEmpty}>
         Email:
-        <input type="text" value = {username} onChange={handleUsernameChange} />
+        <input type="text" value={username} onChange={handleUsernameChange} />
         Password:
-        <input type="password" value = {password} onChange={handlePasswordChange} />
+        <input
+          type="password"
+          value={password}
+          onChange={handlePasswordChange}
+        />
         <Button onClick={handleSignUpClose}>Sign up</Button>
       </Dialog>
       {userToken && <Button onClick={handleSignOut}>Sign out</Button>}
       {/* Semester */}
       <Autocomplete
-      openOnFocus
+        openOnFocus
         options={semesterSearchResults}
         getOptionLabel={option => option.semester}
         onInputChange={handleSemesterChange}
@@ -328,16 +344,19 @@ function Home() {
       />
       {/* Course Name */}
       <Autocomplete
-      openOnFocus
+        openOnFocus
         options={courseSearchResults}
         getOptionLabel={option => option.name}
         onInputChange={handleCourseNameChange}
         renderInput={params => <TextField {...params} label="Course Name" />}
       />
-
-      {userToken && <input type="text" value={grade} onChange={handleGradeChange}/>}
+      {userToken && (
+        <input type="text" value={grade} onChange={handleGradeChange} />
+      )}
       {userToken && <Button onClick={handleAddGrade}>Add Grade</Button>}
-      {userToken && <TextField label="GPA" value={gpa} InputProps={{ readOnly: true }} />} {' '}
+      {userToken && (
+        <TextField label="GPA" value={gpa} InputProps={{ readOnly: true }} />
+      )}{' '}
       {/* display grades: */}
       {grades.map(semester => (
         <Box border={1} margin={1} padding={1} key={semester.semester}>
