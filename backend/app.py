@@ -82,18 +82,6 @@ def add_grade():
     course = Course.query.filter_by(name=course_name).first()
     user = User.query.filter_by(email=user_email).first()
     
-    #search if any course in the db has the same semester in the db:
-    course_semester = Course.query.filter_by(semester=semester).all()
-    found = False
-    for x in course_semester:
-        if x.name == course_name:
-            found = True
-            break
-    if not found:
-        return jsonify({'message': 'Course not found in this semester'}), 404
-    
-    if not course or not user:
-        return jsonify({'message': 'Course or user not found'}), 404
     # Create a new CourseUser instance
     course_user = UserCourse(name=course.name, email=user.email, grade=grade, semester=semester)
     # Add the new CourseUser to the database
@@ -147,12 +135,31 @@ def search_semesters():
 def search_courses():
     course_name = request.args.get('name')
     semester = request.args.get('semester')
+    token = extract_auth_token(request)
+    user_email = None
+    if token:
+        try:
+            user_email = decode_token(token)
+        except jwt.ExpiredSignatureError:
+            return jsonify({"message": "Token expired."}), 403
+        except jwt.InvalidTokenError:
+            return jsonify({"message": "Invalid token."}), 403
+
+    
+    #get the coureses from the db:
+    temp = UserCourse.query.filter_by(email = user_email).all()
+    found_courses = []
+    for x in temp:
+        found_courses.append(x.name)
+        if x.name == course_name:
+            return jsonify({'message': 'Course already taken'}), 400
+    
     #keep the courses that have the semester name as an attribute
     courses = Course.query.filter_by(semester=semester).all()
     courses_in_semester = []
     for course in courses:
-        if course.semester == semester:
-            courses_in_semester.append(course)
+        if course.semester == semester and course.name not in found_courses:
+            courses_in_semester.append(course) 
     return jsonify(course_schema.dump(courses_in_semester, many=True))
 
 #display all grades of a user, divided per semester:

@@ -115,6 +115,7 @@ function Home() {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${userToken}`,
         },
       }
     );
@@ -145,11 +146,15 @@ function Home() {
         grade: grade,
         semester: semester,
       }),
-    }).then(response =>
+    }).then(response => {
+      if (!response.ok) {
+        alert('You already took the course');
+        return;
+      }
       response.json().then(body => {
         setGradeChanged(!gradeChanged);
-      })
-    );
+      });
+    });
   };
 
   const handleCourseNameChange = (event, value) => {
@@ -243,12 +248,14 @@ function Home() {
       }),
     })
       .then(response => {
-        if (response.status === 401) {
-          alert('Unauthorized: Invalid username or password');
-          return;
-        } else {
-          alert(`Error ${response.status}: ${response.statusText}`);
-          return;
+        if (!response.ok) {
+          if (response.status === 401) {
+            alert('Unauthorized: Invalid username or password');
+            return;
+          } else {
+            alert(`Error ${response.status}: ${response.statusText}`);
+            return;
+          }
         }
         return response.json();
       })
@@ -270,12 +277,14 @@ function Home() {
         password: password,
       }),
     }).then(response => {
-      if (response.status === 400) {
-        alert('Conflict: email already used');
-        return;
-      } else {
-        alert(`Error ${response.status}: ${response.statusText}`);
-        return;
+      if (!response.ok) {
+        if (response.status === 400) {
+          alert('Conflict: email already used');
+          return;
+        } else {
+          alert(`Error ${response.status}: ${response.statusText}`);
+          return;
+        }
       }
       response.json();
     });
