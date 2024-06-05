@@ -2,7 +2,7 @@
 
 ## Description
 
-This project is a web application that allows users to manage their courses and grades. It provides features such as adding a course, deleting a course, replacing a grade, etc.
+This project is a web application, built using python flask for backend, react for frontend and mySQL for the daatabase, that allows users to manage their courses and grades. It provides features such as adding a course, deleting a course, replacing a grade, etc.
 
 ## Setup
 
