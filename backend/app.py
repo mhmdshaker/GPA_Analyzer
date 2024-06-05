@@ -222,3 +222,32 @@ def delete_grade():
     db.session.delete(course_user)
     db.session.commit()
     return jsonify({'message': 'Grade deleted successfully'}), 200
+
+#Replace grade:
+@app.route('/replace_grade', methods=['POST'])
+def replace_grade():
+    course_name = request.json['course']
+    grade = request.json['grade']
+    semester = request.json['semester']
+    token = extract_auth_token(request)
+    user_email = None
+    if token:
+        try:
+            user_email = decode_token(token)
+        except jwt.ExpiredSignatureError:
+            return jsonify({"message": "Token expired."}), 403
+        except jwt.InvalidTokenError:
+            return jsonify({"message": "Invalid token."}), 403
+
+    course = Course.query.filter_by(name=course_name).first()
+    user = User.query.filter_by(email=user_email).first()
+    if not course or not user:
+        return jsonify({'message': 'Course or user not found'}), 404
+
+    course_user = UserCourse.query.filter_by(name=course_name, email=user_email, semester=semester).first()
+    if not course_user:
+        return jsonify({'message': 'Grade not found'}), 404
+
+    course_user.grade = grade
+    db.session.commit()
+    return jsonify({'message': 'Grade replaced successfully'}), 200

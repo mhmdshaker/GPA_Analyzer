@@ -236,6 +236,28 @@ function Home() {
   };
 
   //functions:
+  const handleReplaceGrade = (semester, course, newGrade) => {
+    fetch(`${Server}/replace_grade`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${userToken}`,
+      },
+      body: JSON.stringify({
+        course: course,
+        semester: semester,
+        grade: newGrade,
+      }),
+    }).then(response =>
+      response.json().then(body => {
+        setGradeChanged(!gradeChanged);
+      })
+    );
+  };
+
+
+
+
   const signInFunction = () => {
     fetch(`${Server}/sign_in`, {
       method: 'POST',
@@ -367,25 +389,36 @@ function Home() {
         <TextField label="GPA" value={gpa} InputProps={{ readOnly: true }} />
       )}{' '}
       {/* display grades: */}
-      {grades.map(semester => (
-        <Box border={1} margin={1} padding={1} key={semester.semester}>
-          <Typography variant="h6">{semester.semester}</Typography>
-          {semester.courses.map(course => (
-            <Box border={1} margin={1} padding={1} key={course.course}>
-              <Typography variant="body1">
-                {course.course}: {course.grade}
-              </Typography>
-              <button
-                onClick={() =>
-                  handleDeleteCourse(course.course, semester.semester)
-                }
-              >
-                X
-              </button>
-            </Box>
-          ))}
-        </Box>
-      ))}
+      {userToken &&
+        grades.map(semester => (
+          <Box border={1} margin={1} padding={1} key={semester.semester}>
+            <Typography variant="h6">{semester.semester}</Typography>
+            {semester.courses.map(course => (
+              <Box border={1} margin={1} padding={1} key={course.course}>
+                <Typography variant="body1">
+                  {course.course}: {course.grade}
+                </Typography>
+                <button
+                  onClick={() =>
+                    handleDeleteCourse(course.course, semester.semester)
+                  }
+                >
+                  X
+                </button>
+                {/* replace grade: */}
+                <button
+                  onClick={() => {
+                    // pop up button to enter new grade
+                    const newGrade = prompt('Enter new grade');
+                    handleReplaceGrade(semester.semester, course.course, newGrade);
+                  }}
+                >
+                  Replace Grade
+                </button>
+              </Box>
+            ))}
+          </Box>
+        ))}
     </div>
   );
 }
