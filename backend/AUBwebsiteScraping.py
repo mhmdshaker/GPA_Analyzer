@@ -21,8 +21,9 @@ driver.get('https://www-banner.aub.edu.lb/pls/weba/bwckschd.p_disp_dyn_sched')
 # Give the page some time to load
 wait = WebDriverWait(driver, 0)
 
-# Set to store the courses:
-s = set()
+# Map of semesters to store the courses in each semester, where the key is the semester and the value is a set of pair of course name and credits
+# key = semester, array of values = <course_name, credits>
+s = {}
 
 # Get all semesters from the dropdown
 semester_dict = {option.get_attribute('value'): option.text for option in Select(driver.find_element(By.NAME, 'p_term')).options}
@@ -70,13 +71,25 @@ for semester in semester_dict:
         # Find all <a> tags with href containing 'bwckschd.p_disp_detail_sched'
         course_links = soup.find_all('a', href=True)
         # Iterate over each <a> tag
+        i = 0
         for course in course_links:
+            i= i+1
             if 'bwckschd.p_disp_detail_sched' in course['href']:
                 # Extract the text
                 course_name = course.text.strip()
                 parts = course_name.split(' ')
                 course_name = parts[-4] + ' ' + parts[-3]
-                s.add(course_name)
+                
+                # Find the text containing the credits
+                credit_text = soup.find(text=lambda t: 'Credits' in t)
+                # Extract the number of credits from the text
+                credits = float(credit_text.split()[0])
+                
+                #add the course to the semester:
+                if semester in s:
+                    s[semester].add((course_name, credits))
+                else:
+                    s[semester] = {(course_name, credits)}
                 
         # Return to the previous page to select another subject by clicking the 'Return to Previous' link
         return_link = driver.find_element(By.LINK_TEXT, 'Return to Previous')
@@ -84,3 +97,4 @@ for semester in semester_dict:
 
 # Close the browser
 driver.quit()
+

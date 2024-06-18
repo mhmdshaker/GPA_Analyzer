@@ -6,6 +6,8 @@ from init import app, db, ma, UserCourse, UserCourseSchema, semester_schema
 import jwt, datetime
 from db_config import SECRET_KEY
 from marshmallow import Schema, fields
+from sqlalchemy import text
+
 
 if __name__ == "__main__":
     app.run(debug=True)
@@ -13,6 +15,14 @@ if __name__ == "__main__":
 user_schema = UserSchema()
 course_schema = CourseSchema()
 user_courses_schema = UserCourseSchema()
+
+@app.route('/test_db')
+def test_db():
+    try:
+        db.session.query(text("1")).from_statement(text("SELECT 1")).all()
+        return 'Connected to the database'
+    except Exception as e:
+        return str(e)
 
 #creates a token when logging in
 def create_token(email):

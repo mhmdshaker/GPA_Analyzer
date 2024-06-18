@@ -6,9 +6,11 @@ import TextField from '@material-ui/core/TextField';
 import Box from '@material-ui/core/Box';
 import Typography from '@material-ui/core/Typography';
 import { useState, useEffect } from 'react';
+//for the token:
+import { getUserToken, saveUserToken, clearUserToken } from '../localStorage';
 
 function Home() {
-  const [userToken, setUserToken] = useState();
+  const [userToken, setUserToken] = useState(getUserToken());
   const [signIn, setSignIn] = useState(false);
   const [signUp, setSignUp] = useState(false);
   const [username, setUsername] = useState('');
@@ -24,6 +26,12 @@ function Home() {
   const Server = 'http://localhost:5000';
 
   //Effects:
+  useEffect(() => {
+    console.log('here');
+    setGrades([]);
+    console.log(grades);
+  }, [userToken]);
+
   useEffect(() => {
     const fetchInitialSemesterOptions = async () => {
       const response = await fetch(`${Server}/semesters_search?name=`, {
@@ -203,6 +211,7 @@ function Home() {
 
   const handleSignOut = () => {
     setUserToken(null);
+    clearUserToken();
     setGpa(0);
   };
 
@@ -255,9 +264,6 @@ function Home() {
     );
   };
 
-
-
-
   const signInFunction = () => {
     fetch(`${Server}/sign_in`, {
       method: 'POST',
@@ -282,9 +288,8 @@ function Home() {
         return response.json();
       })
       .then(body => {
-        if (body) {
-          setUserToken(body.token);
-        }
+        setUserToken(body.token);
+        saveUserToken(body.token);
       });
   };
 
@@ -410,7 +415,11 @@ function Home() {
                   onClick={() => {
                     // pop up button to enter new grade
                     const newGrade = prompt('Enter new grade');
-                    handleReplaceGrade(semester.semester, course.course, newGrade);
+                    handleReplaceGrade(
+                      semester.semester,
+                      course.course,
+                      newGrade
+                    );
                   }}
                 >
                   Replace Grade
