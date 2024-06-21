@@ -97,4 +97,3 @@ for semester in semester_dict:
 
 # Close the browser
 driver.quit()
-

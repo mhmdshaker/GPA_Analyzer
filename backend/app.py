@@ -7,6 +7,8 @@ import jwt, datetime
 from db_config import SECRET_KEY
 from marshmallow import Schema, fields
 from sqlalchemy import text
+from AUBwebsiteScraping import scrape_website
+
 
 
 if __name__ == "__main__":
@@ -16,6 +18,13 @@ user_schema = UserSchema()
 course_schema = CourseSchema()
 user_courses_schema = UserCourseSchema()
 
+@app.route('/scrape')
+def scrape():
+    print("here")
+    s = scrape_website()
+    print(s)
+    return s
+    
 @app.route('/test_db')
 def test_db():
     try:
